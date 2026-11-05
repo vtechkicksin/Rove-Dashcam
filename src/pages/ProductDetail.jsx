@@ -1,170 +1,190 @@
-import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ShoppingCart, Shield, Truck, RotateCcw, Star, ChevronRight, Check, ArrowLeft } from 'lucide-react';
-import { products } from '../data/products';
-import ProductCard from '../components/ProductCard';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpRight, Check, ChevronRight, CircleCheck, RotateCcw, ShieldCheck, Truck } from 'lucide-react';
+import { CHANNELS, getProduct, products, specLabels } from '../data/products';
+import { accessories } from '../data/accessories';
+import { STORE_URL } from '../lib/constants';
+import { formatPrice } from '../lib/format';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import ProductGallery from '../components/product/ProductGallery';
+import ProductCard from '../components/product/ProductCard';
+import AccessoryCard from '../components/product/AccessoryCard';
+import AddToCartButton from '../components/cart/AddToCartButton';
+import QuantityStepper from '../components/ui/QuantityStepper';
+import Price from '../components/ui/Price';
+import ProductImage from '../components/ui/ProductImage';
+import NotFound from './NotFound';
 
-export default function ProductDetail() {
-  const { id } = useParams();
-  const product = products.find((p) => p.id === id);
-  const related = products.filter((p) => p.id !== id).slice(0, 3);
+const assurances = [
+  { icon: Truck, title: 'Free US shipping', detail: 'Delivered in 1–3 days' },
+  { icon: RotateCcw, title: 'Free US returns', detail: 'Hassle-free' },
+  { icon: ShieldCheck, title: '1-year warranty', detail: 'Lifetime support' },
+];
 
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-rove-darker flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-white text-2xl font-bold mb-4">Product not found</h1>
-          <Link to="/products" className="btn-primary">Back to Products</Link>
-        </div>
-      </div>
-    );
-  }
+function useInView(ref) {
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref]);
+  return inView;
+}
 
-  const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+function ProductView({ product }) {
+  useDocumentTitle(product.name);
+  const [qty, setQty] = useState(1);
+  const buyBoxRef = useRef(null);
+  const buyBoxVisible = useInView(buyBoxRef);
+
+  const addOns = product.addOns.map((id) => accessories.find((a) => a.id === id)).filter(Boolean);
+  const related = products.filter((p) => p.id !== product.id && p.available).slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-rove-darker pt-28 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-rove-muted mb-8">
-          <Link to="/" className="hover:text-white transition-colors">Home</Link>
-          <ChevronRight size={14} />
-          <Link to="/products" className="hover:text-white transition-colors">Dash Cams</Link>
-          <ChevronRight size={14} />
-          <span className="text-rove-text">{product.name}</span>
+    <>
+      <div className="container-page py-8 sm:py-12">
+        <nav aria-label="Breadcrumb" className="mb-8">
+          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-fg-subtle">
+            <li><Link to="/" className="hover:text-white">Home</Link></li>
+            <li aria-hidden="true"><ChevronRight size={14} /></li>
+            <li><Link to="/dash-cams" className="hover:text-white">Dash cams</Link></li>
+            <li aria-hidden="true"><ChevronRight size={14} /></li>
+            <li aria-current="page" className="text-fg">{product.name}</li>
+          </ol>
         </nav>
 
-        <div className="grid lg:grid-cols-2 gap-12 items-start mb-20">
-          {/* Image */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="relative"
-          >
-            <div className="card p-8 lg:p-12 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-radial from-blue-500/8 to-transparent" />
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full max-w-sm mx-auto relative z-10 animate-float"
-                style={{ filter: `drop-shadow(0 20px 60px ${product.color}30)` }}
-              />
-              {product.isNew && (
-                <div className="absolute top-4 left-4 badge bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                  New 2026
-                </div>
-              )}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <ProductGallery images={product.images} name={product.name} />
+          </div>
+
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wider text-fg-subtle">{CHANNELS[product.channels]} dash cam</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">{product.name}</h1>
+            <p className="mt-3 text-lg text-fg-muted">{product.tagline}</p>
+
+            <div className="mt-6">
+              <Price price={product.price} compareAtPrice={product.compareAtPrice} size="lg" showSaving />
             </div>
-          </motion.div>
+            <p className={`mt-2 flex items-center gap-1.5 text-sm ${product.available ? 'text-emerald-400' : 'text-red-400'}`}>
+              <CircleCheck size={16} aria-hidden="true" />
+              {product.available ? 'In stock — ships free in 1–3 days' : 'Currently sold out'}
+            </p>
 
-          {/* Details */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-rove-muted text-sm uppercase tracking-wider font-medium">
-                {product.category}
-              </span>
-              {product.isBestSeller && (
-                <span className="badge bg-yellow-500/10 text-yellow-400 border border-yellow-500/30">
-                  <Star size={10} fill="currentColor" /> Best Seller
-                </span>
-              )}
-            </div>
+            <p className="mt-6 leading-relaxed text-fg-muted">{product.summary}</p>
 
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-              {product.name}
-            </h1>
-            <p className="text-rove-muted text-lg mb-4">{product.tagline}</p>
-
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} fill="currentColor" className="text-yellow-400" />
-                ))}
-              </div>
-              <span className="text-rove-muted text-sm">4.9 · 2,400+ reviews</span>
-            </div>
-
-            {/* Price */}
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-white font-bold text-4xl">${product.price}</span>
-              {product.originalPrice > product.price && (
-                <>
-                  <span className="text-rove-subtle text-xl line-through">${product.originalPrice}</span>
-                  <span className="badge bg-red-500/10 text-red-400 border border-red-500/30">
-                    Save {discount}%
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Highlights */}
-            <div className="grid grid-cols-2 gap-2 mb-6">
+            <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
               {product.highlights.map((h) => (
-                <div key={h} className="flex items-center gap-2 text-sm text-rove-text">
-                  <Check size={14} className="text-blue-400 flex-shrink-0" />
+                <li key={h} className="flex items-start gap-2 text-sm text-fg">
+                  <Check size={16} className="mt-0.5 shrink-0 text-brand-400" aria-hidden="true" />
                   {h}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            {/* CTA */}
-            <div className="flex gap-3 mb-6">
-              <button className="btn-primary flex-1 flex items-center justify-center gap-2 py-4 text-base">
-                <ShoppingCart size={18} />
-                Add to Cart
-              </button>
-              <button className="btn-secondary px-5 py-4">
-                Buy Now
-              </button>
+            <div ref={buyBoxRef} className="mt-8 flex flex-col gap-3 sm:flex-row">
+              {product.available && (
+                <QuantityStepper value={qty} onChange={setQty} label="Quantity" />
+              )}
+              <AddToCartButton
+                id={product.id}
+                name={product.name}
+                available={product.available}
+                qty={qty}
+                className="flex-1 py-3.5 text-base"
+              />
             </div>
+            <a
+              href={`${STORE_URL}/products/${product.handle}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-1 text-sm text-fg-subtle hover:text-white"
+            >
+              View on rovedashcam.com <ArrowUpRight size={14} aria-hidden="true" />
+            </a>
 
-            {/* Trust badges */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {[
-                { icon: Truck, label: 'Free US Shipping', sub: '1-3 business days' },
-                { icon: RotateCcw, label: 'Free Returns', sub: '30-day returns' },
-                { icon: Shield, label: '1 Year Warranty', sub: 'Lifetime support' },
-              ].map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="card p-3 text-center">
-                  <Icon size={18} className="text-blue-400 mx-auto mb-1.5" />
-                  <div className="text-white text-xs font-semibold leading-tight">{label}</div>
-                  <div className="text-rove-subtle text-xs mt-0.5">{sub}</div>
-                </div>
+            <ul className="mt-8 grid grid-cols-3 gap-3">
+              {assurances.map(({ icon: Icon, title, detail }) => (
+                <li key={title} className="rounded-xl border border-ink-700 bg-ink-900 p-3 text-center">
+                  <Icon size={18} className="mx-auto text-brand-400" aria-hidden="true" />
+                  <p className="mt-2 text-xs font-semibold text-white">{title}</p>
+                  <p className="text-[11px] text-fg-subtle">{detail}</p>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            {/* Full specs */}
-            <div className="card p-5">
-              <h3 className="text-white font-semibold mb-4">Full Specifications</h3>
-              <div className="space-y-2.5">
-                {Object.entries(product.specs).map(([key, val]) => (
-                  <div key={key} className="flex justify-between items-start text-sm gap-4">
-                    <span className="text-rove-muted capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    <span className="text-rove-text text-right max-w-[55%]">{val}</span>
+            <section className="mt-10" aria-labelledby="specs-title">
+              <h2 id="specs-title" className="text-lg font-semibold text-white">Specifications</h2>
+              <dl className="mt-4 divide-y divide-ink-700 rounded-2xl border border-ink-700">
+                {Object.entries(specLabels).map(([key, label]) => (
+                  <div key={key} className="grid grid-cols-[9rem_1fr] gap-4 px-4 py-3 text-sm">
+                    <dt className="text-fg-subtle">{label}</dt>
+                    <dd className="text-fg">{product.specs[key] ?? 'Not listed'}</dd>
                   </div>
                 ))}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Related products */}
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-8">
-            You Might Also Like
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-5">
-            {related.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
+              </dl>
+              <Link to="/compare" className="mt-3 inline-block text-sm font-medium text-brand-300 hover:text-brand-400">
+                Compare with other models →
+              </Link>
+            </section>
           </div>
         </div>
       </div>
-    </div>
+
+      {addOns.length > 0 && (
+        <section className="border-t border-ink-700 bg-ink-900/40 py-16" aria-labelledby="addons-title">
+          <div className="container-page">
+            <h2 id="addons-title" className="text-2xl font-bold tracking-tight text-white">Complete your setup</h2>
+            <p className="mt-2 text-fg-muted">Compatible accessories for the {product.name}.</p>
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {addOns.map((a) => (
+                <AccessoryCard key={a.id} item={a} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="container-page py-16" aria-labelledby="related-title">
+        <h2 id="related-title" className="text-2xl font-bold tracking-tight text-white">Other ROVE dash cams</h2>
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {related.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      </section>
+      <div aria-hidden="true" className="h-20" />
+
+      <AnimatePresence>
+        {!buyBoxVisible && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-700 bg-ink-950/95 backdrop-blur-xl"
+          >
+            <div className="container-page flex items-center gap-4 py-3">
+              <ProductImage src={product.images[0]} alt="" sizes="48px" className="hidden h-12 w-12 shrink-0 rounded-lg p-1 sm:flex" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">{product.name}</p>
+                <p className="text-sm text-fg-muted">{formatPrice(product.price)}</p>
+              </div>
+              <AddToCartButton id={product.id} name={product.name} available={product.available} qty={qty} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
+}
+
+export default function ProductDetail() {
+  const { id } = useParams();
+  const product = getProduct(id);
+  // Keyed so quantity and gallery state reset when navigating between products.
+  return product ? <ProductView key={product.id} product={product} /> : <NotFound />;
 }

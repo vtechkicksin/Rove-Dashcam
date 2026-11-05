@@ -2,107 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  body {
+    @apply bg-ink-950 text-fg antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  ::selection {
+    @apply bg-brand-500/30 text-white;
+  }
 
-body {
-  background-color: #0a0a0f;
-  color: #e2e8f0;
-  font-family: 'Inter', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-ink-950;
+  }
 
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0a0a0f;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #2563eb;
-  border-radius: 3px;
+  img {
+    @apply select-none;
+  }
 }
 
 @layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold
+      transition duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold px-6 py-3 rounded-xl
-           hover:from-blue-500 hover:to-blue-600 transition-all duration-300 hover:shadow-glow-blue
-           hover:-translate-y-0.5 active:translate-y-0;
+    @apply btn bg-brand-500 text-ink-950 hover:bg-brand-400 active:bg-brand-600 enabled:hover:shadow-glow;
   }
 
   .btn-secondary {
-    @apply border border-rove-border text-rove-text font-semibold px-6 py-3 rounded-xl
-           hover:border-blue-500 hover:text-blue-400 transition-all duration-300
-           hover:bg-blue-500/5;
+    @apply btn border border-ink-600 bg-ink-800/60 text-fg hover:border-fg-subtle hover:bg-ink-700;
   }
 
-  .card {
-    @apply bg-rove-card border border-rove-border rounded-2xl overflow-hidden
-           transition-all duration-300 hover:border-blue-500/40 hover:shadow-card-hover;
+  .btn-ghost {
+    @apply btn px-3 text-fg-muted hover:bg-white/5 hover:text-fg;
   }
 
-  .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight;
+  .icon-btn {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl text-fg-muted transition
+      hover:bg-white/5 hover:text-fg;
   }
 
-  .section-subtitle {
-    @apply text-rove-muted text-lg mt-4 max-w-2xl;
+  .surface {
+    @apply rounded-2xl border border-ink-700 bg-ink-900 shadow-card;
   }
 
-  .badge {
-    @apply inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider
-           px-3 py-1 rounded-full;
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium;
   }
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-blue-400 to-blue-200 bg-clip-text text-transparent;
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-brand-400;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-300 via-brand-400 to-brand-500 bg-clip-text text-transparent;
   }
 }
 
-/* Noise texture overlay for depth */
-.noise-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  opacity: 0.4;
-  z-index: 0;
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Blue glow effects */
-.glow-effect {
-  position: relative;
-}
-
-.glow-effect::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  background: linear-gradient(135deg, #2563eb, transparent, #2563eb);
-  border-radius: inherit;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.glow-effect:hover::after {
-  opacity: 0.6;
-}
-
-/* Product image container */
-.product-img-container {
-  background: radial-gradient(ellipse at center, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
