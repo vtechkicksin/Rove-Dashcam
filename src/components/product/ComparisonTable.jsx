@@ -20,23 +20,33 @@ const isUniform = (row, models) => new Set(models.map((p) => row.value(p) ?? 'â€
 export default function ComparisonTable({ compact = false, models = products }) {
   const [diffOnly, setDiffOnly] = useState(false);
   const [showAll, setShowAll] = useState(!compact);
-  let rows = showAll ? allRows : allRows.filter((r) => KEY_ROWS.includes(r.key));
-  if (diffOnly) rows = rows.filter((r) => !isUniform(r, models));
+  const visibleRows = showAll ? allRows : allRows.filter((r) => KEY_ROWS.includes(r.key));
+  const sameRows = visibleRows.filter((r) => isUniform(r, models));
+  // Only offer the switch when it would hide something; otherwise it looks broken.
+  const canHide = sameRows.length > 0;
+  const hiding = diffOnly && canHide;
+  const rows = hiding ? visibleRows.filter((r) => !sameRows.includes(r)) : visibleRows;
   const fewModels = models.length <= 2;
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         {!fewModels && <p className="text-sm text-fg-subtle lg:hidden">Swipe to see every model â†’</p>}
-        <label className="ml-auto inline-flex cursor-pointer items-center gap-2 text-sm text-fg-muted">
-          <input
-            type="checkbox"
-            checked={diffOnly}
-            onChange={(e) => setDiffOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-ink-600 bg-ink-800 accent-brand-500"
-          />
-          Only show differences
-        </label>
+        {canHide && (
+          <label className="ml-auto inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-fg-muted sm:min-h-0">
+            <input
+              type="checkbox"
+              checked={diffOnly}
+              onChange={(e) => setDiffOnly(e.target.checked)}
+              className="h-4 w-4 rounded border-ink-600 bg-ink-800 accent-brand-500"
+            />
+            Only show differences
+          </label>
+        )}
+        <p role="status" className={cn('w-full text-right text-sm text-fg-subtle', !hiding && 'sr-only')}>
+          {hiding &&
+            `Hiding ${sameRows.length} ${sameRows.length === 1 ? 'spec' : 'specs'} that ${sameRows.length === 1 ? 'is' : 'are'} the same on every model: ${sameRows.map((r) => r.label).join(', ')}.`}
+        </p>
       </div>
 
       <div className="surface overflow-x-auto scrollbar-none">
