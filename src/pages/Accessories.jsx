@@ -35,7 +35,7 @@ export default function Accessories() {
             aria-checked={category === f.id}
             onClick={() => select(f.id)}
             className={cn(
-              'shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition',
+              'shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition min-h-11 sm:min-h-0',
               category === f.id
                 ? 'border-brand-500 bg-brand-500 text-ink-950'
                 : 'border-ink-600 text-fg-muted hover:border-fg-subtle hover:text-white',

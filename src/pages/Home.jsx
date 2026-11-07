@@ -1,38 +1,25 @@
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import Hero from '../components/home/Hero';
-import TrustBar from '../components/home/TrustBar';
-import ProductFinder from '../components/home/ProductFinder';
-import FeatureGrid from '../components/home/FeatureGrid';
-import FlagshipSpotlight from '../components/home/FlagshipSpotlight';
-import ReviewSpotlight from '../components/home/ReviewSpotlight';
-import ShopMore from '../components/home/ShopMore';
+import ProductLineup from '../components/home/ProductLineup';
+import FeatureExplorer from '../components/home/FeatureExplorer';
+import ProofSection from '../components/home/ProofSection';
 import QuickAnswers from '../components/home/QuickAnswers';
-import BlogSection from '../components/home/BlogSection';
-import ComparisonTable from '../components/product/ComparisonTable';
 import SectionHeader from '../components/ui/SectionHeader';
+import ComparisonTable from '../components/product/ComparisonTable';
 
 export default function Home() {
   useDocumentTitle();
   return (
     <>
       <Hero />
-      <TrustBar />
-      <ProductFinder />
-      <FeatureGrid />
-      <FlagshipSpotlight />
-      <section className="container-page pb-20 sm:pb-24" aria-labelledby="compare-title">
-        <SectionHeader
-          id="compare-title"
-          eyebrow="Which is right for you?"
-          title="Compare every model"
-          description="Key specs side by side, so you can pick the right coverage for how you drive."
-        />
-        <ComparisonTable />
+      <ProductLineup />
+      <FeatureExplorer />
+      <section id="compare" className="container-page scroll-mt-28 py-16 sm:py-20" aria-labelledby="compare-title">
+        <SectionHeader id="compare-title" align="left" eyebrow="Compare" title="Side by side, at a glance" />
+        <ComparisonTable compact />
       </section>
-      <ReviewSpotlight />
-      <ShopMore />
+      <ProofSection />
       <QuickAnswers />
-      <BlogSection />
     </>
   );
 }

@@ -86,7 +86,7 @@ function SearchPanel({ onClose }) {
             aria-activedescendant={results[active] ? `search-${results[active].id}` : undefined}
             className="h-14 flex-1 bg-transparent text-base text-white placeholder:text-fg-subtle focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
-          <button type="button" className="icon-btn h-8 w-8" onClick={onClose} aria-label="Close search">
+          <button type="button" className="icon-btn h-10 w-10" onClick={onClose} aria-label="Close search">
             <X size={18} />
           </button>
         </div>

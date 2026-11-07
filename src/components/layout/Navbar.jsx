@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, ChevronDown, Menu, Search, ShoppingBag, Star, Truck, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Menu, Search, ShoppingBag, Truck, X } from 'lucide-react';
 import { products } from '../../data/products';
 import { externalLinks, LOGO_URL } from '../../lib/constants';
 import { cn, formatPrice } from '../../lib/format';
@@ -129,9 +129,6 @@ export default function Navbar({ onOpenSearch }) {
         <div className="container-page flex h-9 items-center justify-center gap-5 text-xs font-semibold">
           <span className="inline-flex items-center gap-1.5">
             <Truck size={14} aria-hidden="true" /> Free US shipping & returns
-          </span>
-          <span className="hidden items-center gap-1.5 sm:inline-flex">
-            <Star size={14} aria-hidden="true" fill="currentColor" /> 40,000+ five-star reviews
           </span>
         </div>
       </div>

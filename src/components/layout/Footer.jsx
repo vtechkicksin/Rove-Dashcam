@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Check, Mail } from 'lucide-react';
+import { ArrowUpRight, Check, ChevronDown, Mail } from 'lucide-react';
 import { products } from '../../data/products';
 import { accessoryCategories } from '../../data/accessories';
 import { externalLinks, LOGO_URL } from '../../lib/constants';
+import { cn } from '../../lib/format';
 
 const columns = [
   {
@@ -93,6 +94,52 @@ function Newsletter() {
   );
 }
 
+function FooterLink({ link }) {
+  if (link.to) {
+    return (
+      <Link to={link.to} className="inline-block py-2 text-sm text-fg-muted transition hover:text-white sm:py-0">
+        {link.label}
+      </Link>
+    );
+  }
+  return (
+    <a href={link.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 py-2 text-sm text-fg-muted transition hover:text-white sm:py-0">
+      {link.label}
+      <ArrowUpRight size={12} aria-hidden="true" />
+    </a>
+  );
+}
+
+// On phones each group collapses behind its heading; from sm up every group is open.
+function FooterColumn({ column }) {
+  const [open, setOpen] = useState(false);
+  const listId = `footer-${column.heading.toLowerCase().replace(/\s+/g, '-')}`;
+  return (
+    <div className="border-b border-ink-700 sm:border-0">
+      <h3 className="text-sm font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls={listId}
+          className="flex w-full items-center justify-between py-4 sm:hidden"
+        >
+          {column.heading}
+          <ChevronDown size={16} className={cn('text-fg-subtle transition', open && 'rotate-180')} aria-hidden="true" />
+        </button>
+        <span className="hidden sm:inline">{column.heading}</span>
+      </h3>
+      <ul id={listId} className={cn('pb-3 sm:mt-4 sm:block sm:space-y-2.5 sm:pb-0', !open && 'hidden')}>
+        {column.links.map((l) => (
+          <li key={l.label}>
+            <FooterLink link={l} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function Footer() {
   return (
     <footer className="border-t border-ink-700 bg-ink-950">
@@ -105,8 +152,8 @@ export default function Footer() {
           <Newsletter />
         </div>
 
-        <div className="grid grid-cols-2 gap-10 pt-12 md:grid-cols-3 lg:grid-cols-6">
-          <div className="col-span-2 md:col-span-3 lg:col-span-2">
+        <div className="grid pt-10 sm:grid-cols-2 sm:gap-10 sm:pt-12 md:grid-cols-3 lg:grid-cols-6">
+          <div className="mb-6 sm:col-span-2 sm:mb-0 md:col-span-3 lg:col-span-2">
             <img src={LOGO_URL} alt="ROVE Dash Cam" width="160" height="20" className="h-7 w-auto" loading="lazy" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-fg-muted">
               Our mission is to safeguard families from the unpredictable dangers of the road — with quality,
@@ -114,34 +161,11 @@ export default function Footer() {
             </p>
           </div>
           {columns.map((col) => (
-            <div key={col.heading}>
-              <h3 className="text-sm font-semibold text-white">{col.heading}</h3>
-              <ul className="mt-4 space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    {l.to ? (
-                      <Link to={l.to} className="text-sm text-fg-muted transition hover:text-white">
-                        {l.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={l.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-fg-muted transition hover:text-white"
-                      >
-                        {l.label}
-                        <ArrowUpRight size={12} aria-hidden="true" />
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <FooterColumn key={col.heading} column={col} />
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-ink-700 pt-6 text-xs text-fg-subtle sm:flex-row sm:justify-between">
+        <div className="mt-8 flex flex-col gap-2 border-t border-ink-700 pt-6 text-xs sm:mt-12 text-fg-subtle sm:flex-row sm:justify-between">
           <p>© {YEAR} ROVE INNOTECH. All rights reserved.</p>
           <p>Unofficial redesign concept · product data from rovedashcam.com</p>
         </div>

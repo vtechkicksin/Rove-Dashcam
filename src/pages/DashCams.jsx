@@ -1,10 +1,10 @@
 import { useSearchParams } from 'react-router-dom';
-import { CHANNELS, products } from '../data/products';
+import { COVERAGE, products } from '../data/products';
 import { cn } from '../lib/format';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ProductCard from '../components/product/ProductCard';
 
-const channelFilters = [{ id: 'all', label: 'All' }, ...Object.entries(CHANNELS).map(([id, label]) => ({ id, label }))];
+const channelFilters = [{ id: 'all', label: 'All' }, ...Object.entries(COVERAGE).map(([id, label]) => ({ id, label }))];
 
 const sorters = {
   featured: () => 0,
@@ -43,7 +43,7 @@ export default function DashCams() {
       </header>
 
       <div className="mb-8 flex flex-col gap-4 border-b border-ink-700 pb-6 md:flex-row md:items-center md:justify-between">
-        <div role="radiogroup" aria-label="Filter by channels" className="flex flex-wrap gap-2">
+        <div role="radiogroup" aria-label="Filter by what it records" className="flex flex-wrap gap-2">
           {channelFilters.map((f) => (
             <button
               key={f.id}
@@ -52,7 +52,7 @@ export default function DashCams() {
               aria-checked={channel === f.id}
               onClick={() => update('channel', f.id, 'all')}
               className={cn(
-                'rounded-full border px-4 py-2 text-sm font-medium transition',
+                'rounded-full border px-4 py-2 text-sm font-medium transition min-h-11 sm:min-h-0',
                 channel === f.id
                   ? 'border-brand-500 bg-brand-500 text-ink-950'
                   : 'border-ink-600 text-fg-muted hover:border-fg-subtle hover:text-white',

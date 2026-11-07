@@ -14,7 +14,7 @@ export default {
         fg: {
           DEFAULT: '#eef1f6',
           muted: '#a3abba',
-          subtle: '#6f7787',
+          subtle: '#828a9a', // 4.8:1 or better on every ink surface (WCAG AA)
         },
         brand: {
           300: '#fdba74',

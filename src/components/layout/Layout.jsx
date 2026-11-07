@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import CartDrawer from '../cart/CartDrawer';
 import SearchDialog from '../search/SearchDialog';
+import CompareTray from '../compare/CompareTray';
 
 function PageFallback() {
   return (
@@ -51,6 +52,7 @@ export default function Layout() {
         </Suspense>
       </main>
       <Footer />
+      <CompareTray />
       <CartDrawer />
       <SearchDialog open={searchOpen} onClose={closeSearch} />
     </>

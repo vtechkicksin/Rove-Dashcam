@@ -1,160 +1,141 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Pause, Play } from 'lucide-react';
-import { getProduct } from '../../data/products';
-import { cn, formatPrice } from '../../lib/format';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowDown, ArrowRight, Check, ShieldCheck, Star, Truck } from 'lucide-react';
+import { COVERAGE, getProduct } from '../../data/products';
+import { heroTrust } from '../../data/content';
+import { formatPrice } from '../../lib/format';
 import ProductImage from '../ui/ProductImage';
+import SegmentedControl from '../ui/SegmentedControl';
+import AddToCartButton from '../cart/AddToCartButton';
+import { COVERAGE_ICONS } from '../product/coverageIcons';
 
-const slides = [
-  { productId: 'r2-4k-dual-pro', headline: ['America’s most advanced', 'dash cam'] },
-  { productId: 'r2-4k-dual', headline: ['Front and rear 4K,', 'without the premium price'] },
-  { productId: 'r3', headline: ['Every angle covered.', 'Front, cabin and rear.'] },
-].map((s) => ({ ...s, product: getProduct(s.productId) }));
+// In-stock recommendations per coverage, best match first.
+const PICKS = {
+  1: ['r2-4k'],
+  2: ['r2-4k-dual-pro', 'r2-4k-dual'],
+  3: ['r3'],
+};
 
-const INTERVAL_MS = 6500;
+const coverageOptions = [1, 2, 3].map((c) => ({ value: c, label: COVERAGE[c], icon: COVERAGE_ICONS[c] }));
+
+const trustIcons = { shipping: Truck, warranty: ShieldCheck, reviews: Star };
+
+const fade = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6 },
+  transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+};
 
 export default function Hero() {
-  const prefersReducedMotion = useReducedMotion();
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [hovering, setHovering] = useState(false);
-  const autoplay = !prefersReducedMotion && !paused && !hovering;
+  const [channels, setChannels] = useState(2);
+  const [productId, setProductId] = useState(PICKS[2][0]);
+  const product = getProduct(productId);
+  const picks = PICKS[channels].map(getProduct);
 
-  useEffect(() => {
-    if (!autoplay) return undefined;
-    const id = setTimeout(() => setIndex((i) => (i + 1) % slides.length), INTERVAL_MS);
-    return () => clearTimeout(id);
-  }, [autoplay, index]);
-
-  const { product, headline } = slides[index];
+  const chooseCoverage = (c) => {
+    setChannels(c);
+    setProductId(PICKS[c][0]);
+  };
 
   return (
-    <section
-      aria-roledescription="carousel"
-      aria-label="Featured dash cams"
-      className="relative overflow-hidden"
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-      onFocusCapture={() => setHovering(true)}
-      onBlurCapture={() => setHovering(false)}
-    >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)',
-            backgroundSize: '56px 56px',
-            maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
-          }}
-        />
-      </div>
+    <section aria-labelledby="hero-title" className="relative overflow-hidden">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl" />
 
-      <div className="container-page relative grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-24">
-        <div aria-live={autoplay ? 'off' : 'polite'}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <p className="eyebrow">{product.name}</p>
-              <h1 className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {headline[0]} <span className="text-gradient">{headline[1]}</span>
-              </h1>
-              <p className="mt-5 max-w-xl text-lg text-fg-muted">{product.summary}</p>
-              <ul className="mt-6 flex flex-wrap gap-2">
-                {product.highlights.slice(0, 3).map((h) => (
-                  <li key={h} className="chip border-ink-600 bg-ink-800/70 text-fg">
-                    {h}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to={`/dash-cams/${product.id}`}
-                  className="btn-primary whitespace-nowrap px-7 py-3.5 text-base"
-                  aria-label={`Shop ${product.name}, ${formatPrice(product.price)}`}
-                >
-                  Shop now · {formatPrice(product.price)}
-                  <ArrowRight size={18} aria-hidden="true" />
-                </Link>
-                <Link to="/compare" className="btn-secondary whitespace-nowrap px-7 py-3.5 text-base">
-                  Compare models
-                </Link>
-              </div>
+      <div className="container-page relative grid gap-5 py-6 sm:gap-8 sm:py-14 lg:grid-cols-[1.05fr_1fr] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-8 lg:py-16">
+        <div>
+          <h1 id="hero-title" className="text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            4K dash cams that catch <span className="text-gradient">every detail</span>
+          </h1>
+          <p className="mt-3 text-fg-muted sm:mt-4 sm:text-lg">
+            Pick what you want to record<span className="hidden sm:inline"> and we&apos;ll show the camera that fits</span>.
+          </p>
+          <SegmentedControl
+            label="What do you want to record?"
+            options={coverageOptions}
+            value={channels}
+            onChange={chooseCoverage}
+            stretch
+            className="mt-5 sm:mt-6"
+          />
+        </div>
+
+        <div className="relative mx-auto w-full max-w-[12rem] sm:max-w-md lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:max-w-lg lg:self-center">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={product.id} {...fade} className="relative">
+              <ProductImage
+                src={product.images[0]}
+                alt={product.name}
+                priority
+                sizes="(min-width: 1024px) 40vw, 90vw"
+                className="aspect-square rounded-[2rem] p-6 shadow-2xl ring-1 ring-white/10 sm:p-8"
+              />
+              {product.label && (
+                <span className="chip absolute left-4 top-4 border-transparent bg-ink-950/85 text-white backdrop-blur">
+                  {product.label}
+                </span>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="relative mx-auto w-full max-w-lg">
-          <div aria-hidden="true" className="absolute inset-8 rounded-full blur-3xl" style={{ background: `${product.accent}40` }} />
-          <div className="animate-float">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.45 }}
-              >
-                <ProductImage
-                  src={product.images[0]}
-                  alt={product.name}
-                  priority
-                  sizes="(min-width: 1024px) 40vw, 90vw"
-                  className="aspect-square rounded-[2rem] p-8 shadow-2xl ring-1 ring-white/10"
-                />
+        <div>
+          {picks.length > 1 && (
+            <SegmentedControl
+              size="sm"
+              label="Choose a model"
+              options={picks.map((p) => ({ value: p.id, label: p.name.replace('ROVE ', ''), detail: formatPrice(p.price) }))}
+              value={productId}
+              onChange={setProductId}
+              className="mb-4"
+            />
+          )}
+          <div aria-live="polite">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div key={product.id} {...fade}>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">{product.headline}</h2>
+                  <p className="text-xl font-bold text-white sm:text-2xl">{formatPrice(product.price)}</p>
+                </div>
+                <p className="mt-1 text-sm text-fg-subtle">{product.name}</p>
+                <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+                  {product.benefits.map((b) => (
+                    <li key={b} className="flex items-start gap-2 text-sm text-fg">
+                      <Check size={16} className="mt-0.5 shrink-0 text-brand-400" aria-hidden="true" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <AddToCartButton
+                    id={product.id}
+                    name={product.name}
+                    available={product.available}
+                    className="whitespace-nowrap px-7 py-3.5 text-base"
+                  />
+                  <Link to={`/dash-cams/${product.id}`} className="btn-secondary whitespace-nowrap px-7 py-3.5 text-base">
+                    See details <ArrowRight size={18} aria-hidden="true" />
+                  </Link>
+                </div>
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
-      </div>
 
-      <div className="container-page relative pb-10">
-        <div className="flex items-center gap-2">
-          <div role="tablist" aria-label="Choose a featured dash cam" className="flex flex-1 gap-2 overflow-x-auto scrollbar-none">
-            {slides.map((s, i) => (
-              <button
-                key={s.productId}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                onClick={() => setIndex(i)}
-                className={cn(
-                  'relative min-w-[10rem] flex-1 overflow-hidden rounded-xl border px-4 py-3 text-left transition',
-                  i === index ? 'border-ink-600 bg-ink-800' : 'border-ink-700 bg-ink-900/60 hover:border-ink-600',
-                )}
-              >
-                <span className="block text-sm font-semibold text-white">{s.product.name}</span>
-                <span className="block text-xs text-fg-subtle">{s.product.tagline}</span>
-                {i === index && autoplay && (
-                  <motion.span
-                    key={`progress-${index}`}
-                    aria-hidden="true"
-                    className="absolute bottom-0 left-0 h-0.5 bg-brand-500"
-                    initial={{ width: '0%' }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: INTERVAL_MS / 1000, ease: 'linear' }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-          {!prefersReducedMotion && (
-            <button
-              type="button"
-              onClick={() => setPaused((p) => !p)}
-              className="icon-btn shrink-0 border border-ink-700"
-              aria-label={paused ? 'Play slideshow' : 'Pause slideshow'}
-            >
-              {paused ? <Play size={16} /> : <Pause size={16} />}
-            </button>
-          )}
+          <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-fg-muted">
+            {heroTrust.map(({ id, label }) => {
+              const Icon = trustIcons[id];
+              return (
+                <li key={id} className="inline-flex items-center gap-1.5">
+                  <Icon size={15} className="text-brand-400" aria-hidden="true" />
+                  {label}
+                </li>
+              );
+            })}
+          </ul>
+          <a href="#compare" className="mt-3 inline-flex min-h-11 items-center sm:mt-5 sm:min-h-0 gap-1.5 text-sm font-medium text-brand-300 hover:text-brand-400">
+            Not sure? Compare all five <ArrowDown size={15} aria-hidden="true" />
+          </a>
         </div>
       </div>
     </section>

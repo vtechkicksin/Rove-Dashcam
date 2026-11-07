@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductImage from '../ui/ProductImage';
 import { cdnImage, cn } from '../../lib/format';
@@ -12,12 +12,28 @@ export default function ProductGallery({ images, name }) {
     if (e.key === 'ArrowLeft') go(-1);
   };
 
+  // Horizontal swipe on touch screens; a short drag is ignored so taps still work.
+  const touchX = useRef(null);
+  const onPointerDown = (e) => {
+    if (e.pointerType === 'touch') touchX.current = e.clientX;
+  };
+  const onPointerUp = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+  };
+
   return (
     <div className="flex flex-col gap-3" role="region" aria-roledescription="carousel" aria-label={`${name} photos`}>
       <div
         className="group relative overflow-hidden rounded-2xl border border-ink-700"
         tabIndex={0}
         onKeyDown={onKeyDown}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (touchX.current = null)}
+        style={{ touchAction: 'pan-y' }}
         aria-label={`Image ${index + 1} of ${images.length}. Use arrow keys to browse.`}
       >
         <ProductImage
@@ -49,7 +65,22 @@ export default function ProductGallery({ images, name }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="flex justify-center sm:hidden">
+        {images.map((src, i) => (
+          <button
+            key={src}
+            type="button"
+            onClick={() => setIndex(i)}
+            aria-label={`Show image ${i + 1}`}
+            aria-current={i === index}
+            className="flex h-10 w-10 items-center justify-center"
+          >
+            <span className={cn('h-2 rounded-full transition-all', i === index ? 'w-5 bg-brand-500' : 'w-2 bg-ink-600')} />
+          </button>
+        ))}
+      </div>
+
+      <div className="hidden grid-cols-5 gap-2 sm:grid">
         {images.map((src, i) => (
           <button
             key={src}

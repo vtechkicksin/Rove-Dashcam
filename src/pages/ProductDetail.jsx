@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Check, ChevronRight, CircleCheck, RotateCcw, ShieldCheck, Truck } from 'lucide-react';
-import { CHANNELS, getProduct, products, specLabels } from '../data/products';
+import { CHANNELS, COVERAGE, getProduct, products } from '../data/products';
 import { accessories } from '../data/accessories';
 import { STORE_URL } from '../lib/constants';
 import { formatPrice } from '../lib/format';
@@ -14,7 +14,10 @@ import AddToCartButton from '../components/cart/AddToCartButton';
 import QuantityStepper from '../components/ui/QuantityStepper';
 import Price from '../components/ui/Price';
 import ProductImage from '../components/ui/ProductImage';
+import SpecGroups from '../components/product/SpecGroups';
 import NotFound from './NotFound';
+
+const hardwireKit = accessories.find((a) => a.id === 'hardwire-kit');
 
 const assurances = [
   { icon: Truck, title: 'Free US shipping', detail: 'Delivered in 1–3 days' },
@@ -37,6 +40,9 @@ function useInView(ref) {
 function ProductView({ product }) {
   useDocumentTitle(product.name);
   const [qty, setQty] = useState(1);
+  // Parking mode only works with the hardwire kit, so offer it right beside the buy button.
+  const [withKit, setWithKit] = useState(false);
+  const extras = withKit ? [hardwireKit.id] : [];
   const buyBoxRef = useRef(null);
   const buyBoxVisible = useInView(buyBoxRef);
 
@@ -45,8 +51,8 @@ function ProductView({ product }) {
 
   return (
     <>
-      <div className="container-page py-8 sm:py-12">
-        <nav aria-label="Breadcrumb" className="mb-8">
+      <div className="container-page py-4 sm:py-12">
+        <nav aria-label="Breadcrumb" className="mb-8 hidden sm:block">
           <ol className="flex flex-wrap items-center gap-1.5 text-sm text-fg-subtle">
             <li><Link to="/" className="hover:text-white">Home</Link></li>
             <li aria-hidden="true"><ChevronRight size={14} /></li>
@@ -56,23 +62,24 @@ function ProductView({ product }) {
           </ol>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+        <div className="grid gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <ProductGallery images={product.images} name={product.name} />
           </div>
 
           <div>
-            <p className="text-sm font-medium uppercase tracking-wider text-fg-subtle">{CHANNELS[product.channels]} dash cam</p>
+            <p className="text-sm font-medium text-fg-muted">
+              {COVERAGE[product.channels]} dash cam <span className="text-fg-subtle">· {CHANNELS[product.channels]}</span>
+            </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">{product.name}</h1>
-            <p className="mt-3 text-lg text-fg-muted">{product.tagline}</p>
-
-            <div className="mt-6">
+            <div className="mt-3">
               <Price price={product.price} compareAtPrice={product.compareAtPrice} size="lg" showSaving />
             </div>
             <p className={`mt-2 flex items-center gap-1.5 text-sm ${product.available ? 'text-emerald-400' : 'text-red-400'}`}>
               <CircleCheck size={16} aria-hidden="true" />
               {product.available ? 'In stock — ships free in 1–3 days' : 'Currently sold out'}
             </p>
+            <p className="mt-4 text-lg text-fg-muted">{product.tagline}</p>
 
             <p className="mt-6 leading-relaxed text-fg-muted">{product.summary}</p>
 
@@ -85,7 +92,25 @@ function ProductView({ product }) {
               ))}
             </ul>
 
-            <div ref={buyBoxRef} className="mt-8 flex flex-col gap-3 sm:flex-row">
+            {product.available && (
+              <label className="mt-8 flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-700 bg-ink-900 p-4 transition hover:border-ink-600 has-[:checked]:border-brand-500/60">
+                <input
+                  type="checkbox"
+                  checked={withKit}
+                  onChange={(e) => setWithKit(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-brand-500"
+                />
+                <span className="text-sm">
+                  <span className="block font-semibold text-white">Parking mode needs the hardwire kit</span>
+                  <span className="block text-fg-muted">
+                    Add the ROVE hardwire kit for {formatPrice(hardwireKit.price)}
+                    {hardwireKit.compareAtPrice && <span className="text-fg-subtle line-through"> {formatPrice(hardwireKit.compareAtPrice)}</span>}
+                  </span>
+                </span>
+              </label>
+            )}
+
+            <div ref={buyBoxRef} className={`${product.available ? 'mt-3' : 'mt-8'} flex flex-col gap-3 sm:flex-row`}>
               {product.available && (
                 <QuantityStepper value={qty} onChange={setQty} label="Quantity" />
               )}
@@ -94,6 +119,7 @@ function ProductView({ product }) {
                 name={product.name}
                 available={product.available}
                 qty={qty}
+                extras={extras}
                 className="flex-1 py-3.5 text-base"
               />
             </div>
@@ -101,7 +127,7 @@ function ProductView({ product }) {
               href={`${STORE_URL}/products/${product.handle}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-1 text-sm text-fg-subtle hover:text-white"
+              className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm text-fg-subtle hover:text-white sm:min-h-0"
             >
               View on rovedashcam.com <ArrowUpRight size={14} aria-hidden="true" />
             </a>
@@ -111,22 +137,17 @@ function ProductView({ product }) {
                 <li key={title} className="rounded-xl border border-ink-700 bg-ink-900 p-3 text-center">
                   <Icon size={18} className="mx-auto text-brand-400" aria-hidden="true" />
                   <p className="mt-2 text-xs font-semibold text-white">{title}</p>
-                  <p className="text-[11px] text-fg-subtle">{detail}</p>
+                  <p className="text-xs text-fg-subtle">{detail}</p>
                 </li>
               ))}
             </ul>
 
             <section className="mt-10" aria-labelledby="specs-title">
               <h2 id="specs-title" className="text-lg font-semibold text-white">Specifications</h2>
-              <dl className="mt-4 divide-y divide-ink-700 rounded-2xl border border-ink-700">
-                {Object.entries(specLabels).map(([key, label]) => (
-                  <div key={key} className="grid grid-cols-[9rem_1fr] gap-4 px-4 py-3 text-sm">
-                    <dt className="text-fg-subtle">{label}</dt>
-                    <dd className="text-fg">{product.specs[key] ?? 'Not listed'}</dd>
-                  </div>
-                ))}
-              </dl>
-              <Link to="/compare" className="mt-3 inline-block text-sm font-medium text-brand-300 hover:text-brand-400">
+              <div className="mt-4">
+                <SpecGroups product={product} />
+              </div>
+              <Link to="/compare" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-brand-300 hover:text-brand-400 sm:min-h-0">
                 Compare with other models →
               </Link>
             </section>
@@ -173,7 +194,7 @@ function ProductView({ product }) {
                 <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                 <p className="text-sm text-fg-muted">{formatPrice(product.price)}</p>
               </div>
-              <AddToCartButton id={product.id} name={product.name} available={product.available} qty={qty} />
+              <AddToCartButton id={product.id} name={product.name} available={product.available} qty={qty} extras={extras} />
             </div>
           </motion.div>
         )}

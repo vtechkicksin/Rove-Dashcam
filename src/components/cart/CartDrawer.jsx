@@ -79,7 +79,7 @@ function CartPanel() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="icon-btn h-8 w-8 shrink-0"
+                        className="icon-btn h-10 w-10 shrink-0"
                         aria-label={`Remove ${item.name}`}
                       >
                         <Trash2 size={15} />

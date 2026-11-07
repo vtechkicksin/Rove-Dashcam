@@ -1,10 +1,17 @@
 import { externalLinks } from '../lib/constants';
 
-export const trustPoints = [
-  { id: 'shipping', title: 'Free US shipping', detail: 'Delivered in 1–3 days' },
-  { id: 'returns', title: 'Free US returns', detail: 'Hassle-free' },
-  { id: 'reviews', title: '40,000+ 5-star reviews', detail: 'From real drivers' },
-  { id: 'warranty', title: '1-year warranty', detail: '+ lifetime support' },
+// Shown once, under the hero call to action.
+export const heroTrust = [
+  { id: 'shipping', label: 'Ships free in 1–3 days' },
+  { id: 'warranty', label: '1-year warranty' },
+  { id: 'reviews', label: '40,000+ 5-star reviews' },
+];
+
+// Brand promises in the proof section; deliberately different from heroTrust.
+export const promises = [
+  { id: 'returns', title: 'Free US returns', detail: 'Not the right fit? Send it back.' },
+  { id: 'support', title: 'Lifetime support', detail: 'Help for as long as you drive.' },
+  { id: 'updates', title: 'Free firmware updates', detail: 'New features over the air.' },
 ];
 
 export const featuredReview = {
@@ -17,60 +24,22 @@ export const featuredReview = {
 export const quickAnswers = [
   {
     q: 'Does a dash cam record over old footage?',
-    a: 'Yes. Loop recording saves short clips and overwrites the oldest ones when the card is full. Clips locked by the G-sensor during an impact are protected from being overwritten.',
+    a: 'Yes, oldest clips go first — but impact clips are locked and never overwritten.',
     url: `${externalLinks.blog}/dash-cam-loop-recording-g-sensor-locked-videos`,
-  },
-  {
-    q: 'How do I connect my ROVE dash cam to my phone?',
-    a: 'Install the free ROVE Dash Cam app from the App Store or Google Play and create your account first, then join the camera’s built-in Wi-Fi from the app to view, download and share footage.',
-    url: `${externalLinks.blog}/connect-rove-dash-cam-to-phone-app`,
-  },
-  {
-    q: 'Supercapacitor or battery — which is better?',
-    a: 'A supercapacitor is the safer, longer-lasting choice, especially in hot climates. Every ROVE dash cam uses one instead of a lithium battery.',
-    url: `${externalLinks.blog}/supercapacitor-vs-battery-dash-cam`,
   },
   {
     q: 'What makes a dash cam good at night?',
-    a: 'A Sony STARVIS or STARVIS 2 sensor paired with a wide-aperture lens. These capture far more light, so plates and signs stay readable after dark.',
+    a: 'A Sony STARVIS sensor. Every ROVE camera has one, so plates stay readable after dark.',
     url: `${externalLinks.blog}/best-dash-cam-for-night-driving`,
   },
   {
-    q: 'Which dash cam is best for Uber and Lyft?',
-    a: 'One that records three views at once — the road ahead, the cabin and the rear. The 3-channel ROVE R3 covers all three from one unit.',
-    url: `${externalLinks.blog}/best-dash-cam-for-uber-lyft-drivers`,
-  },
-];
-
-const BLOG_CDN = 'https://cdn.shopify.com/s/files/1/2287/2433/files';
-
-export const blogPosts = [
-  {
-    title: 'Loop Recording, G-Sensor and Locked Videos: How Your Dash Cam Saves Footage',
-    date: '2026-11-02',
-    readTime: '8 min read',
-    image: `${BLOG_CDN}/loop-recording-pictorial-guide.webp`,
-    url: `${externalLinks.blog}/dash-cam-loop-recording-g-sensor-locked-videos`,
-  },
-  {
-    title: 'How to Connect Your ROVE Dash Cam to Your Phone',
-    date: '2026-10-27',
-    readTime: '7 min read',
-    image: `${BLOG_CDN}/rove-app-settings.webp`,
-    url: `${externalLinks.blog}/connect-rove-dash-cam-to-phone-app`,
-  },
-  {
-    title: 'Best Dash Cam for Uber and Lyft Drivers',
-    date: '2026-10-23',
-    readTime: '9 min read',
-    image: `${BLOG_CDN}/how_to_save_and_share_rideshare_clip.webp`,
-    url: `${externalLinks.blog}/best-dash-cam-for-uber-lyft-drivers`,
-  },
-  {
-    title: 'Supercapacitor vs Battery Dash Cams: Which Is Safer in a Hot Car?',
-    date: '2026-10-15',
-    readTime: '5 min read',
-    image: `${BLOG_CDN}/how-a-dash-cam-supercapacitor-works.webp`,
+    q: 'Supercapacitor or battery — which is better?',
+    a: 'A supercapacitor. It handles a hot car far better, and every ROVE camera uses one.',
     url: `${externalLinks.blog}/supercapacitor-vs-battery-dash-cam`,
+  },
+  {
+    q: 'Which dash cam is best for Uber and Lyft?',
+    a: 'The ROVE R3 — it records the road, the cabin and the rear at the same time.',
+    url: `${externalLinks.blog}/best-dash-cam-for-uber-lyft-drivers`,
   },
 ];

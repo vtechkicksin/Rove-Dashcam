@@ -2,15 +2,26 @@
 // Spec values come from the comparison table on rovedashcam.com.
 const CDN = 'https://cdn.shopify.com/s/files/1/2287/2433/files';
 
+// Technical channel count; always shown after the coverage name, never instead of it.
 export const CHANNELS = {
-  1: 'Single Channel',
-  2: 'Dual Channel',
-  3: '3-Channel',
+  1: '1-channel',
+  2: '2-channel',
+  3: '3-channel',
+};
+
+// What each channel count records, in shopper terms. This is the primary label everywhere.
+export const COVERAGE = {
+  1: 'Road ahead',
+  2: 'Front + rear',
+  3: 'Front, cabin + rear',
 };
 
 export const products = [
   {
     id: 'r2-4k',
+    bestFor: 'Everyday commuting on a budget',
+    headline: 'Sharp 4K. Simple price.',
+    benefits: ['4K Ultra HD video', 'Built-in Wi-Fi & GPS', 'Heat-safe supercapacitor'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'cpl-filter'],
     name: 'ROVE R2-4K',
     handle: 'rove-r2-4k-car-dashcam',
@@ -52,6 +63,9 @@ export const products = [
   },
   {
     id: 'r2-4k-pro',
+    bestFor: 'A wider view of the road ahead',
+    headline: '4K with a wider view.',
+    benefits: ['4K at 30fps', '150° wide angle', 'Built-in GPS & 5GHz Wi-Fi'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'cpl-filter'],
     name: 'ROVE R2-4K PRO',
     handle: 'new-rove-r2-4k-pro-dash-cam-4k-ultra-hd-2160p-dash-board-camera-built-in-wifi-gps',
@@ -93,6 +107,9 @@ export const products = [
   },
   {
     id: 'r2-4k-dual',
+    bestFor: 'Front and rear protection at the best value',
+    headline: 'Front and rear, fully covered.',
+    benefits: ['Front + rear recording', 'Free 128GB card', '20 MB/s Wi-Fi downloads'],
     addOns: ['hardwire-kit', 'cpl-filter', 'r2d-9m-cable'],
     name: 'ROVE R2-4K DUAL',
     handle:
@@ -135,6 +152,9 @@ export const products = [
   },
   {
     id: 'r2-4k-dual-pro',
+    bestFor: 'The most detail, front and rear',
+    headline: 'True 4K front. 2K rear.',
+    benefits: ['True 4K front + 2K rear', 'Night-ready STARVIS 2', 'Free 128GB card + CPL filter'],
     addOns: ['hardwire-kit', 'industrial-sd', 'r2-suction-mount'],
     name: 'ROVE R2-4K DUAL PRO',
     handle: 'rove-r2-4k-dual-pro-dash-cam',
@@ -176,6 +196,9 @@ export const products = [
   },
   {
     id: 'r3',
+    bestFor: 'Rideshare drivers and families',
+    headline: 'Road, cabin and rear. One camera.',
+    benefits: ['Front, cabin + rear', '3" touchscreen', 'Built-in GPS'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'r3-mount-bundle'],
     name: 'ROVE R3',
     handle: 'rove-r3-dash-cam-3-channel-built-in-wifi-gps-1440p-1080p-1080p-front-cabin-rear',
@@ -228,5 +251,34 @@ export const specLabels = {
   power: 'Power',
   parking: 'Parking mode',
 };
+
+// Specs grouped for the product page, with a plain-language label first and the
+// technical value underneath. `hint` explains why the row matters.
+export const specGroups = [
+  {
+    title: 'Video',
+    rows: [
+      { key: 'resolution', label: 'Video sharpness', hint: 'Higher resolution keeps plates and signs readable.' },
+      { key: 'sensor', label: 'Night vision sensor', hint: 'Sony STARVIS sensors capture more light after dark.' },
+      { key: 'display', label: 'Screen' },
+    ],
+  },
+  {
+    title: 'Phone and location',
+    rows: [
+      { key: 'download', label: 'Phone transfer speed', hint: 'How fast clips copy to the free ROVE app.' },
+      { key: 'wifi', label: 'Wi-Fi' },
+      { key: 'gps', label: 'GPS', hint: 'Stamps your speed and location on the footage.' },
+    ],
+  },
+  {
+    title: 'Power and parking',
+    rows: [
+      { key: 'power', label: 'Power source', hint: 'A supercapacitor copes with a hot car better than a battery.' },
+      { key: 'parking', label: 'Parking mode', hint: 'Needs the ROVE hardwire kit.' },
+      { key: 'storage', label: 'Memory card' },
+    ],
+  },
+];
 
 export const getProduct = (id) => products.find((p) => p.id === id);

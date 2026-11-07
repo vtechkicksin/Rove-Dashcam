@@ -22,7 +22,7 @@ React 19 · Vite · React Router 7 · Tailwind CSS 3 · Framer Motion · lucide-
 src/
 ├── components/
 │   ├── cart/        Cart drawer and add-to-cart button
-│   ├── home/        Home page sections (hero, finder, features, FAQ, blog…)
+│   ├── home/        Home page modules (hero picker, lineup, feature tabs, proof, FAQ)
 │   ├── layout/      App shell: navbar, footer, layout with route outlet
 │   ├── product/     Product/accessory cards, gallery, comparison table
 │   ├── search/      ⌘K search dialog

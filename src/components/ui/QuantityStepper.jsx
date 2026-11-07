@@ -4,7 +4,7 @@ import { cn } from '../../lib/format';
 export default function QuantityStepper({ value, onChange, min = 1, max = 10, label, size = 'md' }) {
   const btn = cn(
     'inline-flex items-center justify-center text-fg-muted transition hover:text-white disabled:opacity-30 disabled:hover:text-fg-muted',
-    size === 'sm' ? 'h-8 w-8' : 'h-11 w-11',
+    size === 'sm' ? 'h-10 w-10 sm:h-8 sm:w-8' : 'h-11 w-11',
   );
   return (
     <div

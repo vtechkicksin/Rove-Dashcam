@@ -32,8 +32,8 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold
-      transition duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold
+      transition duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0;
   }
 
   .btn-primary {
@@ -49,8 +49,8 @@
   }
 
   .icon-btn {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl text-fg-muted transition
-      hover:bg-white/5 hover:text-fg;
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted transition
+      hover:bg-white/5 hover:text-fg sm:h-10 sm:w-10;
   }
 
   .surface {
