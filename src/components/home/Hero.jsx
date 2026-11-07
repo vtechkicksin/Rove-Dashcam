@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Pause, Play, ShieldCheck, Star } from 'lucide-react';
 import { COVERAGE, getProduct } from '../../data/products';
 import { heroTrust } from '../../data/content';
@@ -9,6 +9,7 @@ import ProductImage from '../ui/ProductImage';
 import SegmentedControl from '../ui/SegmentedControl';
 import AddToCartButton from '../cart/AddToCartButton';
 import { COVERAGE_ICONS } from '../product/coverageIcons';
+import { startsAdvancing, useAutoAdvance } from '../../hooks/useAutoAdvance';
 
 // In-stock recommendations per coverage, best match first.
 const PICKS = {
@@ -25,26 +26,6 @@ const trustIcons = { warranty: ShieldCheck, reviews: Star };
 const ROTATE_MS = 4500;
 const ROTATION_KEY = 'rove-hero-rotation';
 
-// 'play' | 'paused' | null (never chosen). Only the Pause/Play button saves a choice.
-function loadRotationChoice() {
-  try {
-    const saved = localStorage.getItem(ROTATION_KEY);
-    return saved === 'play' || saved === 'paused' ? saved : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveRotationChoice(choice) {
-  try {
-    localStorage.setItem(ROTATION_KEY, choice);
-  } catch {
-    // Storage can be unavailable (private mode); the choice still holds for this visit.
-  }
-}
-
-const systemReducesMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 const fade = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
@@ -53,21 +34,7 @@ const fade = {
 };
 
 export default function Hero() {
-  const prefersReducedMotion = useReducedMotion();
-  const [rotationChoice, setRotationChoice] = useState(loadRotationChoice);
-  // Picking a pill or model yourself stops the rotation for this visit, so it never overrides you.
-  const [pickedByUser, setPickedByUser] = useState(false);
-  // Hovering or focusing the pills holds the rotation until the pointer or focus leaves.
-  const [held, setHeld] = useState(false);
-
-  // Rotate unless paused, or unless the device asks for reduced motion and the visitor hasn't pressed Play.
-  const rotationOn = !pickedByUser && (rotationChoice === 'play' || (rotationChoice === null && !prefersReducedMotion));
-  const rotating = rotationOn && !held;
-
-  const [channels, setChannels] = useState(() => {
-    const startsRotating = loadRotationChoice() === 'play' || (loadRotationChoice() === null && !systemReducesMotion());
-    return startsRotating ? 1 : 2;
-  });
+  const [channels, setChannels] = useState(() => (startsAdvancing(ROTATION_KEY) ? 1 : 2));
   const [productId, setProductId] = useState(() => PICKS[channels][0]);
   const product = getProduct(productId);
   // The other in-stock model for this coverage (only front + rear has two).
@@ -78,43 +45,18 @@ export default function Hero() {
     setProductId(PICKS[c][0]);
   };
 
+  const rotation = useAutoAdvance({
+    position: channels,
+    onAdvance: () => showCoverage((channels % 3) + 1),
+    ms: ROTATE_MS,
+    storageKey: ROTATION_KEY,
+  });
+
+  // Picking a pill or model yourself stops the rotation for this visit, so it never overrides you.
   const chooseCoverage = (c) => {
-    setPickedByUser(true);
+    rotation.stopForUser();
     showCoverage(c);
   };
-
-  // Time left on the current pill. A hold freezes it, so the progress line and the switch stay in step.
-  const remainingRef = useRef(ROTATE_MS);
-  // Bumped on Play so the progress line restarts together with a fresh countdown.
-  const [cycle, setCycle] = useState(0);
-
-  const toggleRotation = () => {
-    const next = rotationOn ? 'paused' : 'play';
-    if (next === 'play') {
-      remainingRef.current = ROTATE_MS;
-      setCycle((c) => c + 1);
-    }
-    setRotationChoice(next);
-    setPickedByUser(false);
-    saveRotationChoice(next);
-  };
-
-  // A new pill always gets the full time. Declared before the timer so it runs first.
-  useEffect(() => {
-    remainingRef.current = ROTATE_MS;
-  }, [channels]);
-
-  useEffect(() => {
-    if (!rotating) return undefined;
-    const startedAt = performance.now();
-    const timer = setTimeout(() => showCoverage((channels % 3) + 1), remainingRef.current);
-    return () => {
-      clearTimeout(timer);
-      remainingRef.current = Math.max(0, remainingRef.current - (performance.now() - startedAt));
-    };
-  }, [rotating, channels, cycle]);
-
-  const progressState = rotating ? 'running' : rotationOn ? 'held' : 'off';
 
   return (
     <section aria-labelledby="hero-title" className="relative overflow-hidden">
@@ -129,26 +71,22 @@ export default function Hero() {
             <p className="text-sm text-fg-subtle">What do you want to record?</p>
             <button
               type="button"
-              onClick={toggleRotation}
-              aria-label={rotationOn ? 'Pause the camera rotation' : 'Play the camera rotation'}
+              onClick={rotation.toggle}
+              aria-label={rotation.on ? 'Pause the camera rotation' : 'Play the camera rotation'}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-fg-muted transition-colors hover:text-white sm:min-h-0 sm:py-1"
             >
-              {rotationOn ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
-              {rotationOn ? 'Pause' : 'Play'}
+              {rotation.on ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+              {rotation.on ? 'Pause' : 'Play'}
             </button>
           </div>
-          <div
-            onMouseEnter={() => setHeld(true)}
-            onMouseLeave={() => setHeld(false)}
-            onFocus={() => setHeld(true)}
-            onBlur={() => setHeld(false)}
-          >
+          {/* Hovering or focusing the pills holds the rotation until the pointer or focus leaves. */}
+          <div {...rotation.holdProps}>
             <SegmentedControl
               label="What do you want to record?"
               options={coverageOptions}
               value={channels}
               onChange={chooseCoverage}
-              progress={{ state: progressState, ms: ROTATE_MS, cycle }}
+              progress={{ state: rotation.state, ms: ROTATE_MS, cycle: rotation.cycle }}
               className="mt-2 max-w-xl"
             />
           </div>
@@ -175,7 +113,7 @@ export default function Hero() {
 
         <div>
           {/* Announce product changes only when the visitor caused them, not on every auto-advance. */}
-          <div aria-live={rotating ? 'off' : 'polite'}>
+          <div aria-live={rotation.state === 'running' ? 'off' : 'polite'}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={product.id} {...fade}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -196,7 +134,7 @@ export default function Hero() {
             <button
               type="button"
               onClick={() => {
-                setPickedByUser(true);
+                rotation.stopForUser();
                 setProductId(other.id);
               }}
               className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand-300 hover:text-brand-400 sm:min-h-0"
