@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown, ArrowRight, Check, ShieldCheck, Star, Truck } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, Pause, Play, ShieldCheck, Star } from 'lucide-react';
 import { COVERAGE, getProduct } from '../../data/products';
 import { heroTrust } from '../../data/content';
 import { formatPrice } from '../../lib/format';
@@ -19,7 +19,31 @@ const PICKS = {
 
 const coverageOptions = [1, 2, 3].map((c) => ({ value: c, label: COVERAGE[c], icon: COVERAGE_ICONS[c] }));
 
-const trustIcons = { shipping: Truck, warranty: ShieldCheck, reviews: Star };
+const trustIcons = { warranty: ShieldCheck, reviews: Star };
+
+// The coverage pills advance on their own: Road ahead → Front + rear → Front, cabin + rear.
+const ROTATE_MS = 4500;
+const ROTATION_KEY = 'rove-hero-rotation';
+
+// 'play' | 'paused' | null (never chosen). Only the Pause/Play button saves a choice.
+function loadRotationChoice() {
+  try {
+    const saved = localStorage.getItem(ROTATION_KEY);
+    return saved === 'play' || saved === 'paused' ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRotationChoice(choice) {
+  try {
+    localStorage.setItem(ROTATION_KEY, choice);
+  } catch {
+    // Storage can be unavailable (private mode); the choice still holds for this visit.
+  }
+}
+
+const systemReducesMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const fade = {
   initial: { opacity: 0, y: 10 },
@@ -29,15 +53,48 @@ const fade = {
 };
 
 export default function Hero() {
-  const [channels, setChannels] = useState(2);
-  const [productId, setProductId] = useState(PICKS[2][0]);
-  const product = getProduct(productId);
-  const picks = PICKS[channels].map(getProduct);
+  const prefersReducedMotion = useReducedMotion();
+  const [rotationChoice, setRotationChoice] = useState(loadRotationChoice);
+  // Picking a pill or model yourself stops the rotation for this visit, so it never overrides you.
+  const [pickedByUser, setPickedByUser] = useState(false);
+  // Hovering or focusing the pills holds the rotation until the pointer or focus leaves.
+  const [held, setHeld] = useState(false);
 
-  const chooseCoverage = (c) => {
+  // Rotate unless paused, or unless the device asks for reduced motion and the visitor hasn't pressed Play.
+  const rotationOn = !pickedByUser && (rotationChoice === 'play' || (rotationChoice === null && !prefersReducedMotion));
+  const rotating = rotationOn && !held;
+
+  const [channels, setChannels] = useState(() => {
+    const startsRotating = loadRotationChoice() === 'play' || (loadRotationChoice() === null && !systemReducesMotion());
+    return startsRotating ? 1 : 2;
+  });
+  const [productId, setProductId] = useState(() => PICKS[channels][0]);
+  const product = getProduct(productId);
+  // The other in-stock model for this coverage (only front + rear has two).
+  const other = PICKS[channels].map(getProduct).find((p) => p.id !== productId);
+
+  const showCoverage = (c) => {
     setChannels(c);
     setProductId(PICKS[c][0]);
   };
+
+  const chooseCoverage = (c) => {
+    setPickedByUser(true);
+    showCoverage(c);
+  };
+
+  const toggleRotation = () => {
+    const next = rotationOn ? 'paused' : 'play';
+    setRotationChoice(next);
+    setPickedByUser(false);
+    saveRotationChoice(next);
+  };
+
+  useEffect(() => {
+    if (!rotating) return undefined;
+    const timer = setTimeout(() => showCoverage((channels % 3) + 1), ROTATE_MS);
+    return () => clearTimeout(timer);
+  }, [rotating, channels]);
 
   return (
     <section aria-labelledby="hero-title" className="relative overflow-hidden">
@@ -48,17 +105,33 @@ export default function Hero() {
           <h1 id="hero-title" className="text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
             4K dash cams that catch <span className="text-gradient">every detail</span>
           </h1>
-          <p className="mt-3 text-fg-muted sm:mt-4 sm:text-lg">
-            Pick what you want to record<span className="hidden sm:inline"> and we&apos;ll show the camera that fits</span>.
-          </p>
-          <SegmentedControl
-            label="What do you want to record?"
-            options={coverageOptions}
-            value={channels}
-            onChange={chooseCoverage}
-            stretch
-            className="mt-5 sm:mt-6"
-          />
+          <div className="mt-4 flex items-center justify-between gap-3 sm:mt-6">
+            <p className="text-sm text-fg-subtle">What do you want to record?</p>
+            <button
+              type="button"
+              onClick={toggleRotation}
+              aria-label={rotationOn ? 'Pause the camera rotation' : 'Play the camera rotation'}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-fg-muted transition-colors hover:text-white sm:min-h-0 sm:py-1"
+            >
+              {rotationOn ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+              {rotationOn ? 'Pause' : 'Play'}
+            </button>
+          </div>
+          <div
+            onMouseEnter={() => setHeld(true)}
+            onMouseLeave={() => setHeld(false)}
+            onFocus={() => setHeld(true)}
+            onBlur={() => setHeld(false)}
+          >
+            <SegmentedControl
+              label="What do you want to record?"
+              options={coverageOptions}
+              value={channels}
+              onChange={chooseCoverage}
+              progressMs={rotating ? ROTATE_MS : undefined}
+              className="mt-2"
+            />
+          </div>
         </div>
 
         <div className="relative mx-auto w-full max-w-[12rem] sm:max-w-md lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:max-w-lg lg:self-center">
@@ -81,48 +154,50 @@ export default function Hero() {
         </div>
 
         <div>
-          {picks.length > 1 && (
-            <SegmentedControl
-              size="sm"
-              label="Choose a model"
-              options={picks.map((p) => ({ value: p.id, label: p.name.replace('ROVE ', ''), detail: formatPrice(p.price) }))}
-              value={productId}
-              onChange={setProductId}
-              className="mb-4"
-            />
-          )}
-          <div aria-live="polite">
+          {/* Announce product changes only when the visitor caused them, not on every auto-advance. */}
+          <div aria-live={rotating ? 'off' : 'polite'}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={product.id} {...fade}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">{product.headline}</h2>
-                  <p className="text-xl font-bold text-white sm:text-2xl">{formatPrice(product.price)}</p>
+                  <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">{product.name}</h2>
+                  <p className="text-2xl font-bold text-white sm:text-3xl">{formatPrice(product.price)}</p>
                 </div>
-                <p className="mt-1 text-sm text-fg-subtle">{product.name}</p>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-3">
-                  {product.benefits.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-fg">
-                      <Check size={16} className="mt-0.5 shrink-0 text-brand-400" aria-hidden="true" />
-                      {b}
+                <ul className="mt-4 flex flex-wrap gap-2" aria-label="Highlights">
+                  {product.chips.map((chip) => (
+                    <li key={chip} className="rounded-lg bg-ink-800 px-3 py-1.5 text-sm text-fg">
+                      {chip}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <AddToCartButton
-                    id={product.id}
-                    name={product.name}
-                    available={product.available}
-                    className="whitespace-nowrap px-7 py-3.5 text-base"
-                  />
-                  <Link to={`/dash-cams/${product.id}`} className="btn-secondary whitespace-nowrap px-7 py-3.5 text-base">
-                    See details <ArrowRight size={18} aria-hidden="true" />
-                  </Link>
-                </div>
               </motion.div>
             </AnimatePresence>
           </div>
+          {other && (
+            <button
+              type="button"
+              onClick={() => {
+                setPickedByUser(true);
+                setProductId(other.id);
+              }}
+              className="mt-3 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand-300 hover:text-brand-400 sm:min-h-0"
+            >
+              Or the {other.name.replace('ROVE ', '')}, {formatPrice(other.price)} <ArrowRight size={14} aria-hidden="true" />
+            </button>
+          )}
 
-          <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-fg-muted">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <AddToCartButton
+              id={product.id}
+              name={product.name}
+              available={product.available}
+              className="whitespace-nowrap px-7 py-3.5 text-base"
+            />
+            <Link to={`/dash-cams/${product.id}`} className="btn-secondary whitespace-nowrap px-7 py-3.5 text-base">
+              See details <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-fg-muted">
             {heroTrust.map(({ id, label }) => {
               const Icon = trustIcons[id];
               return (
@@ -133,9 +208,6 @@ export default function Hero() {
               );
             })}
           </ul>
-          <a href="#compare" className="mt-3 inline-flex min-h-11 items-center sm:mt-5 sm:min-h-0 gap-1.5 text-sm font-medium text-brand-300 hover:text-brand-400">
-            Not sure? Compare all five <ArrowDown size={15} aria-hidden="true" />
-          </a>
         </div>
       </div>
     </section>
