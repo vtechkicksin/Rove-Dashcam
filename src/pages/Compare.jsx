@@ -27,7 +27,7 @@ export default function Compare() {
           )}
         </p>
       </header>
-      <ComparisonTable models={models} />
+      <ComparisonTable key={models.map((p) => p.id).join()} models={models} />
     </div>
   );
 }
