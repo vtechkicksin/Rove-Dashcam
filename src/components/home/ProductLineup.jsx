@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { products } from '../../data/products';
 import SectionHeader from '../ui/SectionHeader';
-import Carousel from '../ui/Carousel';
 import ProductCard from '../product/ProductCard';
 
 export default function ProductLineup() {
@@ -19,11 +18,13 @@ export default function ProductLineup() {
           </Link>
         }
       />
-      <Carousel label="ROVE dash cams" itemClassName="w-[78%] sm:w-[46%] lg:w-[calc((100%-4rem)/5)]">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <li key={p.id}>
+            <ProductCard product={p} />
+          </li>
         ))}
-      </Carousel>
+      </ul>
     </section>
   );
 }

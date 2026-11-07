@@ -140,7 +140,7 @@ export default function FeatureExplorer() {
             role="tablist"
             aria-label="Features"
             onKeyDown={onKeyDown}
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-col lg:px-0"
+            className="flex flex-wrap gap-2 lg:flex-col"
           >
             {features.map((f, i) => {
               const selected = f.id === activeId;
@@ -157,7 +157,7 @@ export default function FeatureExplorer() {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setActiveId(f.id)}
                   className={cn(
-                    'flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition lg:px-5 lg:py-4',
+                    'flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition sm:px-4 sm:py-3 lg:px-5 lg:py-4',
                     selected ? 'border-brand-500/50 bg-ink-800' : 'border-ink-700 bg-ink-900 hover:border-ink-600',
                   )}
                 >
