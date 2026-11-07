@@ -1,6 +1,5 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
 import { COVERAGE, products, specLabels } from '../../data/products';
 import { cn, formatPrice } from '../../lib/format';
 import ProductImage from '../ui/ProductImage';
@@ -10,8 +9,6 @@ const allRows = [
   { key: 'coverage', label: 'Records', value: (p) => COVERAGE[p.channels] },
   ...Object.entries(specLabels).map(([key, label]) => ({ key, label, value: (p) => p.specs[key] })),
 ];
-// The rows most shoppers decide on; the rest sit behind "Show all specs".
-const KEY_ROWS = ['bestFor', 'coverage', 'resolution', 'sensor', 'gps', 'download'];
 const PICK_ID = 'r2-4k-dual';
 
 const isUniform = (row, models) => new Set(models.map((p) => row.value(p) ?? '—')).size === 1;
@@ -45,10 +42,9 @@ function ModelPicker({ label, value, onChange, options }) {
 }
 
 // `models` narrows the table to the products picked in the compare tray.
-export default function ComparisonTable({ compact = false, models = products }) {
+export default function ComparisonTable({ models = products }) {
   const isWide = useIsWide();
   const [diffOnly, setDiffOnly] = useState(false);
-  const [showAll, setShowAll] = useState(!compact);
 
   // Narrow screens compare two models at a time, chosen with the pickers.
   const needsPicker = !isWide && models.length > 2;
@@ -66,12 +62,11 @@ export default function ComparisonTable({ compact = false, models = products }) 
       return next;
     });
 
-  const visibleRows = showAll ? allRows : allRows.filter((r) => KEY_ROWS.includes(r.key));
-  const sameRows = visibleRows.filter((r) => isUniform(r, cols));
+  const sameRows = allRows.filter((r) => isUniform(r, cols));
   // Only offer the switch when it would hide something; otherwise it looks broken.
   const canHide = sameRows.length > 0;
   const hiding = diffOnly && canHide;
-  const rows = hiding ? visibleRows.filter((r) => !sameRows.includes(r)) : visibleRows;
+  const rows = hiding ? allRows.filter((r) => !sameRows.includes(r)) : allRows;
 
   return (
     <div>
@@ -167,14 +162,6 @@ export default function ComparisonTable({ compact = false, models = products }) 
           </tbody>
         </table>
       </div>
-      {compact && (
-        <div className="mt-4 flex justify-center">
-          <button type="button" onClick={() => setShowAll((v) => !v)} aria-expanded={showAll} className="btn-ghost">
-            {showAll ? 'Show key specs only' : `Show all ${allRows.length} specs`}
-            <ChevronDown size={16} className={showAll ? 'rotate-180 transition' : 'transition'} aria-hidden="true" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
