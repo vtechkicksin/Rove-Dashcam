@@ -19,8 +19,8 @@ export const COVERAGE = {
 export const products = [
   {
     id: 'r2-4k',
+    chips: ['4K Ultra HD', 'Wi-Fi + GPS', 'Heat-safe power'],
     bestFor: 'Everyday commuting on a budget',
-    headline: 'Sharp 4K. Simple price.',
     benefits: ['4K Ultra HD video', 'Built-in Wi-Fi & GPS', 'Heat-safe supercapacitor'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'cpl-filter'],
     name: 'ROVE R2-4K',
@@ -63,8 +63,8 @@ export const products = [
   },
   {
     id: 'r2-4k-pro',
+    chips: ['4K video', '150° wide angle', 'Wi-Fi + GPS'],
     bestFor: 'A wider view of the road ahead',
-    headline: '4K with a wider view.',
     benefits: ['4K at 30fps', '150° wide angle', 'Built-in GPS & 5GHz Wi-Fi'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'cpl-filter'],
     name: 'ROVE R2-4K PRO',
@@ -107,8 +107,8 @@ export const products = [
   },
   {
     id: 'r2-4k-dual',
+    chips: ['Front + rear', 'Free 128GB card', 'Fast Wi-Fi'],
     bestFor: 'Front and rear protection at the best value',
-    headline: 'Front and rear, fully covered.',
     benefits: ['Front + rear recording', 'Free 128GB card', '20 MB/s Wi-Fi downloads'],
     addOns: ['hardwire-kit', 'cpl-filter', 'r2d-9m-cable'],
     name: 'ROVE R2-4K DUAL',
@@ -152,8 +152,8 @@ export const products = [
   },
   {
     id: 'r2-4k-dual-pro',
+    chips: ['4K front + 2K rear', 'Night vision', '128GB included'],
     bestFor: 'The most detail, front and rear',
-    headline: 'True 4K front. 2K rear.',
     benefits: ['True 4K front + 2K rear', 'Night-ready STARVIS 2', 'Free 128GB card + CPL filter'],
     addOns: ['hardwire-kit', 'industrial-sd', 'r2-suction-mount'],
     name: 'ROVE R2-4K DUAL PRO',
@@ -196,8 +196,8 @@ export const products = [
   },
   {
     id: 'r3',
+    chips: ['Front, cabin + rear', '3" touchscreen', 'Built-in GPS'],
     bestFor: 'Rideshare drivers and families',
-    headline: 'Road, cabin and rear. One camera.',
     benefits: ['Front, cabin + rear', '3" touchscreen', 'Built-in GPS'],
     addOns: ['hardwire-kit', 'ultimate-sd', 'r3-mount-bundle'],
     name: 'ROVE R3',
