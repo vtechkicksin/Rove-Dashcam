@@ -2,7 +2,6 @@ import { externalLinks } from '../lib/constants';
 
 // Shown once, under the hero call to action.
 export const heroTrust = [
-  { id: 'shipping', label: 'Ships free in 1–3 days' },
   { id: 'warranty', label: '1-year warranty' },
   { id: 'reviews', label: '40,000+ 5-star reviews' },
 ];
