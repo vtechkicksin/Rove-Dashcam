@@ -29,17 +29,6 @@ export default {
       maxWidth: {
         content: '80rem',
       },
-      keyframes: {
-        // Fills a bar left to right; used for the hero's auto-advance countdown.
-        fill: {
-          from: { transform: 'scaleX(0)' },
-          to: { transform: 'scaleX(1)' },
-        },
-      },
-      animation: {
-        // Duration is set inline per use.
-        fill: 'fill 1s linear forwards',
-      },
       boxShadow: {
         card: '0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6)',
         glow: '0 0 0 1px rgb(249 115 22 / 0.35), 0 12px 40px -8px rgb(249 115 22 / 0.35)',

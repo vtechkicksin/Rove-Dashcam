@@ -125,7 +125,7 @@ export default function Hero() {
           <h1 id="hero-title" className="text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
             4K dash cams that catch <span className="text-gradient">every detail</span>
           </h1>
-          <div className="mt-4 flex items-center justify-between gap-3 sm:mt-6">
+          <div className="mt-4 flex max-w-xl items-center justify-between gap-3 sm:mt-6">
             <p className="text-sm text-fg-subtle">What do you want to record?</p>
             <button
               type="button"
@@ -149,7 +149,7 @@ export default function Hero() {
               value={channels}
               onChange={chooseCoverage}
               progress={{ state: progressState, ms: ROTATE_MS, cycle }}
-              className="mt-2"
+              className="mt-2 max-w-xl"
             />
           </div>
         </div>
