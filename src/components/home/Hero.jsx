@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Pause, Play, ShieldCheck, Star } from 'lucide-react';
@@ -83,18 +83,38 @@ export default function Hero() {
     showCoverage(c);
   };
 
+  // Time left on the current pill. A hold freezes it, so the progress line and the switch stay in step.
+  const remainingRef = useRef(ROTATE_MS);
+  // Bumped on Play so the progress line restarts together with a fresh countdown.
+  const [cycle, setCycle] = useState(0);
+
   const toggleRotation = () => {
     const next = rotationOn ? 'paused' : 'play';
+    if (next === 'play') {
+      remainingRef.current = ROTATE_MS;
+      setCycle((c) => c + 1);
+    }
     setRotationChoice(next);
     setPickedByUser(false);
     saveRotationChoice(next);
   };
 
+  // A new pill always gets the full time. Declared before the timer so it runs first.
+  useEffect(() => {
+    remainingRef.current = ROTATE_MS;
+  }, [channels]);
+
   useEffect(() => {
     if (!rotating) return undefined;
-    const timer = setTimeout(() => showCoverage((channels % 3) + 1), ROTATE_MS);
-    return () => clearTimeout(timer);
-  }, [rotating, channels]);
+    const startedAt = performance.now();
+    const timer = setTimeout(() => showCoverage((channels % 3) + 1), remainingRef.current);
+    return () => {
+      clearTimeout(timer);
+      remainingRef.current = Math.max(0, remainingRef.current - (performance.now() - startedAt));
+    };
+  }, [rotating, channels, cycle]);
+
+  const progressState = rotating ? 'running' : rotationOn ? 'held' : 'off';
 
   return (
     <section aria-labelledby="hero-title" className="relative overflow-hidden">
@@ -128,7 +148,7 @@ export default function Hero() {
               options={coverageOptions}
               value={channels}
               onChange={chooseCoverage}
-              progressMs={rotating ? ROTATE_MS : undefined}
+              progress={{ state: progressState, ms: ROTATE_MS, cycle }}
               className="mt-2"
             />
           </div>

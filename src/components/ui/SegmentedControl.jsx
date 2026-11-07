@@ -4,11 +4,16 @@ import { cn } from '../../lib/format';
 
 // Radio group rendered as equal pills on phones, with roving focus and arrow-key selection.
 // The orange highlight is one shared element that glides to the chosen pill (200 ms); under
-// reduced motion (MotionConfig) it jumps instead. `progressMs`, when set, draws a bar that
-// fills across the selected pill over that time (a countdown to the next auto-advance).
-export default function SegmentedControl({ options, value, onChange, label, className, progressMs }) {
+// reduced motion (MotionConfig) it jumps instead.
+//
+// `progress` draws a segmented line under the pills, one segment per pill, like story bars:
+// { state: 'running' | 'held' | 'off', ms, cycle }. Running fills the selected segment over `ms`
+// (earlier segments stay full); held freezes it in place; off just marks the selected pill.
+// `cycle` restarts the fill when it changes.
+export default function SegmentedControl({ options, value, onChange, label, className, progress }) {
   const refs = useRef([]);
   const groupId = useId();
+  const selectedIndex = options.findIndex((o) => o.value === value);
 
   const onKeyDown = (e) => {
     const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
@@ -26,7 +31,7 @@ export default function SegmentedControl({ options, value, onChange, label, clas
       role="radiogroup"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cn('grid grid-cols-3 gap-2 sm:flex sm:flex-wrap', className)}
+      className={cn('grid grid-cols-3 gap-2 sm:flex sm:flex-wrap', progress && 'gap-y-5 pb-4', className)}
     >
       {options.map(({ value: v, label: text, icon: Icon }, i) => {
         const selected = v === value;
@@ -53,15 +58,7 @@ export default function SegmentedControl({ options, value, onChange, label, clas
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               />
             )}
-            {selected && progressMs && (
-              <span aria-hidden="true" className="absolute inset-x-3 bottom-1 z-10 h-0.5 overflow-hidden rounded-full bg-ink-950/20">
-                <span
-                  key={v}
-                  className="block h-full origin-left animate-fill rounded-full bg-ink-950/70"
-                  style={{ animationDuration: `${progressMs}ms` }}
-                />
-              </span>
-            )}
+            {progress && <ProgressSegment index={i} selectedIndex={selectedIndex} progress={progress} value={v} />}
             <span className="relative z-10 inline-flex flex-col items-center gap-2 sm:flex-row">
               {Icon && <Icon size={16} aria-hidden="true" />}
               {text}
@@ -70,5 +67,32 @@ export default function SegmentedControl({ options, value, onChange, label, clas
         );
       })}
     </div>
+  );
+}
+
+function ProgressSegment({ index, selectedIndex, progress, value }) {
+  const { state, ms, cycle } = progress;
+  const isCurrent = index === selectedIndex;
+  // Off: only the chosen pill is marked. Otherwise segments before the current one are complete.
+  const full = state === 'off' ? isCurrent : index < selectedIndex;
+  const filling = isCurrent && state !== 'off';
+
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute -bottom-3 left-1.5 right-1.5 h-1 rounded-full bg-ink-700">
+      {filling ? (
+        <span
+          key={`${value}-${cycle}`}
+          className="block h-full origin-left animate-fill rounded-full bg-gradient-to-r from-brand-300 to-brand-500 shadow-[0_0_10px_rgb(249_115_22/0.65)]"
+          style={{ animationDuration: `${ms}ms`, animationPlayState: state === 'held' ? 'paused' : 'running' }}
+        />
+      ) : (
+        <span
+          className={cn(
+            'block h-full origin-left rounded-full bg-gradient-to-r from-brand-300 to-brand-500 transition-transform duration-200',
+            full ? 'scale-x-100 shadow-[0_0_10px_rgb(249_115_22/0.65)]' : 'scale-x-0',
+          )}
+        />
+      )}
+    </span>
   );
 }
