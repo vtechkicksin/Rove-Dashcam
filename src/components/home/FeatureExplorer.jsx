@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Check, MapPin, Minus, Moon, SquareParking, Wifi } from 'lucide-react';
+import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { Check, MapPin, Minus, Moon, Pause, Play, SquareParking, Wifi } from 'lucide-react';
 import { products } from '../../data/products';
 import { accessories } from '../../data/accessories';
 import { cn } from '../../lib/format';
@@ -8,6 +8,8 @@ import SectionHeader from '../ui/SectionHeader';
 import ProductImage from '../ui/ProductImage';
 import Price from '../ui/Price';
 import AddToCartButton from '../cart/AddToCartButton';
+import { useAutoAdvance } from '../../hooks/useAutoAdvance';
+import { useFillAnimation } from '../../hooks/useFillAnimation';
 
 const shortName = (p) => p.name.replace('ROVE ', '');
 const mbps = (p) => Number(/(\d+) MB\/s/.exec(p.specs.download)?.[1] ?? 0);
@@ -18,17 +20,34 @@ const frontRes = (p) => {
 };
 const hardwireKit = accessories.find((a) => a.id === 'hardwire-kit');
 
+// The tabs tour themselves once the section is in view; each stays for TOUR_MS.
+const TOUR_MS = 4000;
+const TOUR_KEY = 'rove-features-tour';
+const EASE = [0.22, 1, 0.36, 1];
+// Rows and bars in the panel arrive one after another.
+const rowIn = (i) => ({
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.24, delay: 0.08 + i * 0.045, ease: EASE },
+});
+// Section entrance: heading, then tabs, then panel, once.
+const revealIn = (inView, i) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
+  transition: { duration: 0.34, delay: i * 0.08, ease: EASE },
+});
+
 function ModelRows({ rows }) {
   return (
     <ul className="divide-y divide-ink-700">
-      {rows.map(({ product, value, ok = true }) => (
-        <li key={product.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
+      {rows.map(({ product, value, ok = true }, i) => (
+        <motion.li key={product.id} {...rowIn(i)} className="flex items-center justify-between gap-4 py-2.5 text-sm">
           <span className="text-fg">{shortName(product)}</span>
           <span className={cn('inline-flex items-center gap-1.5', ok ? 'text-white' : 'text-fg-subtle')}>
             {ok ? <Check size={14} className="text-brand-400" aria-hidden="true" /> : <Minus size={14} aria-hidden="true" />}
             {value}
           </span>
-        </li>
+        </motion.li>
       ))}
     </ul>
   );
@@ -95,19 +114,20 @@ const features = [
       <>
         <p className="mb-3 text-xs font-medium uppercase tracking-wider text-fg-subtle">Wi-Fi download speed</p>
         <ul className="space-y-3">
-          {products.map((p) => (
-            <li key={p.id} className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 text-sm">
+          {products.map((p, i) => (
+            <motion.li key={p.id} {...rowIn(i)} className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 text-sm">
               <span className="truncate text-fg">{shortName(p)}</span>
               <span className="h-2 overflow-hidden rounded-full bg-ink-800" aria-hidden="true">
                 <motion.span
-                  className="block h-full rounded-full bg-brand-500"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(mbps(p) / MAX_MBPS) * 100}%` }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="block h-full origin-left rounded-full bg-brand-500"
+                  style={{ width: `${(mbps(p) / MAX_MBPS) * 100}%` }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 0.45, delay: 0.14 + i * 0.045, ease: EASE }}
                 />
               </span>
               <span className="text-right text-white">{mbps(p)} MB/s</span>
-            </li>
+            </motion.li>
           ))}
         </ul>
       </>
@@ -115,39 +135,91 @@ const features = [
   },
 ];
 
+// Side line that fills down the active tab while the tour is on it.
+function TabProgress({ selected, state, cycle }) {
+  const lineRef = useRef(null);
+  useFillAnimation(lineRef, { state: selected ? state : 'off', ms: TOUR_MS, axis: 'y', restartKey: cycle });
+  return (
+    <span
+      ref={lineRef}
+      aria-hidden="true"
+      className="absolute inset-y-0 left-0 w-[3px] origin-top bg-gradient-to-b from-brand-300 to-brand-500"
+      style={{ transform: 'scaleY(0)' }}
+    />
+  );
+}
+
 export default function FeatureExplorer() {
   const [activeId, setActiveId] = useState(features[0].id);
   const tabRefs = useRef([]);
+  const sectionRef = useRef(null);
+  // The entrance plays and the tour starts the first time the section is properly in view.
+  const inView = useInView(sectionRef, { once: true, amount: 0.3 });
   const index = features.findIndex((f) => f.id === activeId);
   const active = features[index];
+
+  const tour = useAutoAdvance({
+    position: activeId,
+    onAdvance: () => setActiveId(features[(index + 1) % features.length].id),
+    ms: TOUR_MS,
+    storageKey: TOUR_KEY,
+    ready: inView,
+  });
+
+  // Picking a tab yourself ends the tour for this visit.
+  const choose = (i) => {
+    tour.stopForUser();
+    setActiveId(features[i].id);
+  };
 
   const onKeyDown = (e) => {
     const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
     if (!step) return;
     e.preventDefault();
     const next = (index + step + features.length) % features.length;
-    setActiveId(features[next].id);
+    choose(next);
     tabRefs.current[next]?.focus();
   };
 
   return (
-    <section className="border-y border-ink-700 bg-ink-900/40 py-16 sm:py-20" aria-labelledby="features-title">
+    <section ref={sectionRef} className="border-y border-ink-700 bg-ink-900/40 py-16 sm:py-20" aria-labelledby="features-title">
       <div className="container-page">
-        <SectionHeader id="features-title" align="left" eyebrow="Why ROVE" title="Built for the moments that matter" />
+        <motion.div {...revealIn(inView, 0)}>
+          <SectionHeader
+            id="features-title"
+            align="left"
+            eyebrow="Why ROVE"
+            title="Built for the moments that matter"
+            action={
+              <button
+                type="button"
+                onClick={tour.toggle}
+                aria-label={tour.on ? 'Pause the feature tour' : 'Play the feature tour'}
+                className="inline-flex min-h-11 items-center gap-1.5 self-start rounded-full border border-ink-600 px-3 text-xs font-medium text-fg-muted transition-colors hover:text-white sm:min-h-0 sm:self-auto sm:py-1.5"
+              >
+                {tour.on ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+                {tour.on ? 'Pause' : 'Play'}
+              </button>
+            }
+          />
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr] lg:gap-10">
+          {/* Hovering or focusing the tabs holds the tour; it resumes with the time that was left. */}
           <div
             role="tablist"
             aria-label="Features"
             onKeyDown={onKeyDown}
+            {...tour.holdProps}
             className="flex flex-wrap gap-2 lg:flex-col"
           >
             {features.map((f, i) => {
               const selected = f.id === activeId;
               const Icon = f.icon;
               return (
-                <button
+                <motion.button
                   key={f.id}
+                  {...revealIn(inView, i + 1)}
                   ref={(el) => (tabRefs.current[i] = el)}
                   id={`feature-tab-${f.id}`}
                   type="button"
@@ -155,15 +227,16 @@ export default function FeatureExplorer() {
                   aria-selected={selected}
                   aria-controls="feature-panel"
                   tabIndex={selected ? 0 : -1}
-                  onClick={() => setActiveId(f.id)}
+                  onClick={() => choose(i)}
                   className={cn(
-                    'flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition sm:px-4 sm:py-3 lg:px-5 lg:py-4',
+                    'relative flex items-center gap-3 overflow-hidden rounded-2xl border px-3 py-2.5 text-left transition-colors sm:px-4 sm:py-3 lg:px-5 lg:py-4',
                     selected ? 'border-brand-500/50 bg-ink-800' : 'border-ink-700 bg-ink-900 hover:border-ink-600',
                   )}
                 >
+                  <TabProgress selected={selected} state={tour.state} cycle={tour.cycle} />
                   <span
                     className={cn(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors',
                       selected ? 'bg-brand-500 text-ink-950' : 'bg-brand-500/10 text-brand-400',
                     )}
                   >
@@ -173,12 +246,18 @@ export default function FeatureExplorer() {
                     <span className="block whitespace-nowrap font-semibold text-white">{f.tab}</span>
                     <span className="hidden text-sm text-fg-muted lg:block">{f.line}</span>
                   </span>
-                </button>
+                </motion.button>
               );
             })}
           </div>
 
-          <div id="feature-panel" role="tabpanel" aria-labelledby={`feature-tab-${active.id}`} className="surface p-6 sm:p-8">
+          <motion.div
+            {...revealIn(inView, features.length + 1)}
+            id="feature-panel"
+            role="tabpanel"
+            aria-labelledby={`feature-tab-${active.id}`}
+            className="surface p-6 sm:p-8"
+          >
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={active.id}
@@ -192,7 +271,7 @@ export default function FeatureExplorer() {
                 <div className="mt-6">{active.visual()}</div>
               </motion.div>
             </AnimatePresence>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
