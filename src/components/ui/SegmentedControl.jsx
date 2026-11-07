@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/format';
+import { useFillAnimation } from '../../hooks/useFillAnimation';
 
 // Radio group rendered as equal-width pills, with roving focus and arrow-key selection.
 // The orange highlight is one shared element that glides to the chosen pill (200 ms); under
@@ -69,28 +70,15 @@ export default function SegmentedControl({ options, value, onChange, label, clas
 // Decorative: screen readers already hear the selected pill, so the bar is hidden from them.
 function ProgressBar({ count, selectedIndex, progress }) {
   const { state, ms, cycle } = progress;
-  const active = state !== 'off';
   const fillRef = useRef(null);
-  const animationRef = useRef(null);
-
-  // Each pill fills its own share of the bar. A new pill or a new cycle starts a fresh fill.
-  useEffect(() => {
-    animationRef.current?.cancel();
-    animationRef.current = null;
-    if (!active) return;
-    animationRef.current = fillRef.current.animate(
-      [{ transform: `scaleX(${selectedIndex / count})` }, { transform: `scaleX(${(selectedIndex + 1) / count})` }],
-      { duration: ms, easing: 'linear', fill: 'forwards' },
-    );
-  }, [active, selectedIndex, count, ms, cycle]);
-
-  // Holding pauses the fill exactly where it is; it resumes from the same point.
-  useEffect(() => {
-    if (state === 'held') animationRef.current?.pause();
-    if (state === 'running') animationRef.current?.play();
-  }, [state]);
-
-  useEffect(() => () => animationRef.current?.cancel(), []);
+  // Each pill fills its own share of the bar; holding pauses it in place.
+  useFillAnimation(fillRef, {
+    state,
+    ms,
+    from: selectedIndex / count,
+    to: (selectedIndex + 1) / count,
+    restartKey: cycle,
+  });
 
   return (
     <div aria-hidden="true" className="relative mt-4 h-1.5 rounded-full bg-ink-700">
