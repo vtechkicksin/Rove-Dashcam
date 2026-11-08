@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { getProduct, products } from '../data/products';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ComparisonTable from '../components/product/ComparisonTable';
+import SharedFeatures from '../components/product/SharedFeatures';
 
 export default function Compare() {
   useDocumentTitle('Compare Dash Cams');
@@ -19,7 +20,7 @@ export default function Compare() {
         <p className="mt-3 text-fg-muted">
           {narrowed
             ? `Comparing ${models.length} models.`
-            : 'Start with “Best for”, then tick “Only show differences” to see what sets each model apart.'}{' '}
+            : 'Start with “Best for”. Everything they share is listed first, so every row in the table is a real difference.'}{' '}
           {narrowed && (
             <Link to="/compare" className="font-medium text-brand-300 hover:text-brand-400">
               Show all models
@@ -27,6 +28,7 @@ export default function Compare() {
           )}
         </p>
       </header>
+      <SharedFeatures />
       <ComparisonTable key={models.map((p) => p.id).join()} models={models} />
     </div>
   );
