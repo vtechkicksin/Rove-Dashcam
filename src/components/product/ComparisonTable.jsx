@@ -1,17 +1,11 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
-import { COVERAGE, products, specLabels } from '../../data/products';
+import { products } from '../../data/products';
+import { differingRows } from '../../lib/compareRows';
 import { cn, formatPrice } from '../../lib/format';
 import ProductImage from '../ui/ProductImage';
 
-const allRows = [
-  { key: 'bestFor', label: 'Best for', value: (p) => p.bestFor },
-  { key: 'coverage', label: 'Records', value: (p) => COVERAGE[p.channels] },
-  ...Object.entries(specLabels).map(([key, label]) => ({ key, label, value: (p) => p.specs[key] })),
-];
 const PICK_ID = 'r2-4k-dual';
-
-const isUniform = (row, models) => new Set(models.map((p) => row.value(p) ?? '—')).size === 1;
 
 // Five columns only fit from the lg breakpoint up; below that the table shows two models.
 const WIDE = '(min-width: 1024px)';
@@ -41,10 +35,10 @@ function ModelPicker({ label, value, onChange, options }) {
   );
 }
 
-// `models` narrows the table to the products picked in the compare tray.
+// `models` narrows the table to the products picked in the compare tray. Specs that are the same on
+// every model are left out here and shown in the SharedFeatures strip instead (see lib/compareRows).
 export default function ComparisonTable({ models = products }) {
   const isWide = useIsWide();
-  const [diffOnly, setDiffOnly] = useState(false);
 
   // Narrow screens compare two models at a time, chosen with the pickers.
   const needsPicker = !isWide && models.length > 2;
@@ -62,12 +56,6 @@ export default function ComparisonTable({ models = products }) {
       return next;
     });
 
-  const sameRows = allRows.filter((r) => isUniform(r, cols));
-  // Only offer the switch when it would hide something; otherwise it looks broken.
-  const canHide = sameRows.length > 0;
-  const hiding = diffOnly && canHide;
-  const rows = hiding ? allRows.filter((r) => !sameRows.includes(r)) : allRows;
-
   return (
     <div>
       {needsPicker && (
@@ -76,24 +64,6 @@ export default function ComparisonTable({ models = products }) {
           <ModelPicker label="Model 2" value={pair[1]} onChange={(id) => setSlot(1, id)} options={models} />
         </div>
       )}
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-        {canHide && (
-          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-fg-muted sm:min-h-0">
-            <input
-              type="checkbox"
-              checked={diffOnly}
-              onChange={(e) => setDiffOnly(e.target.checked)}
-              className="h-4 w-4 rounded border-ink-600 bg-ink-800 accent-brand-500"
-            />
-            Only show differences
-          </label>
-        )}
-        {/* Live region stays in the DOM so screen readers announce changes; it is only drawn while rows are hidden. */}
-        <p role="status" className={hiding ? 'w-full text-right text-sm text-fg-subtle' : 'sr-only'}>
-          {hiding &&
-            `Hiding ${sameRows.length} ${sameRows.length === 1 ? 'spec' : 'specs'} that ${sameRows.length === 1 ? 'is' : 'are'} the same on every model: ${sameRows.map((r) => r.label).join(', ')}.`}
-        </p>
-      </div>
 
       <div className="surface">
         <table className="w-full table-fixed border-collapse text-xs sm:text-sm">
@@ -131,7 +101,7 @@ export default function ComparisonTable({ models = products }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {differingRows.map((row) => (
               <tr key={row.key} className="border-t border-ink-700">
                 <th scope="row" className="p-2 text-left font-medium text-fg-muted sm:p-4">
                   {row.label}
